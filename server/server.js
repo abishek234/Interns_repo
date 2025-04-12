@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import UserRoutes from "./routes/UserRoutes.js"; 
 import JobRoutes from "./routes/JobRoutes.js";
+import ProductRoutes from "./routes/ProductRoutes.js";
 
 
 import dotenv from 'dotenv';
@@ -27,6 +28,7 @@ app.use(bodyParser.json());
 
 app.use('/users', UserRoutes);
 app.use('/jobs', JobRoutes);
+app.use('/products', ProductRoutes);
 
 
   

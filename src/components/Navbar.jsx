@@ -47,6 +47,11 @@ export default function Navbar() {
              Career
             </Link>
                 </li>
+            <li>
+                <Link to="/product" className="text-para opacity-80 hover:text-primary-start hover:opacity-100">
+             Products
+            </Link>
+                </li>
         </ul>
         <Link to="/login">
         <Button className="hidden md:flex" />
@@ -93,6 +98,11 @@ export default function Navbar() {
                 <li>
                 <Link to="/career" className="text-para opacity-80 hover:text-primary-start hover:opacity-100">
              Career
+            </Link>
+                </li>
+                <li>
+                <Link to="/product" className="text-para opacity-80 hover:text-primary-start hover:opacity-100">
+             Products
             </Link>
                 </li>
               </ul>

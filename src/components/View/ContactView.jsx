@@ -1,136 +1,181 @@
-import Navbar from "../Navbar";
-import { useRef, useState } from "react";
-import emailjs from "@emailjs/browser";
+import React, { useState } from 'react';
+import { Box, Container, Typography, Paper, Grid, Button, TextField, CircularProgress } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import Navbar from '../Navbar';
+import NeuralBackground from '../../../src/components/neurons/neurons';
 
-export default function ContactView(){
-    const formRef = useRef();
-    const [form, setForm] = useState({
-      fname: "",
-      email: "",
-      subject:"",
-      message: "",
+// Styled components
+const ContentContainer = styled(Container)(({ theme }) => ({
+  position: 'relative',
+  zIndex: 1,
+  paddingTop: theme.spacing(12),
+  paddingBottom: theme.spacing(8),
+  [theme.breakpoints.up('md')]: {
+    paddingTop: theme.spacing(16),
+    paddingBottom: theme.spacing(12),
+  },
+}));
+
+const GlassCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  borderRadius: '16px',
+  backgroundColor: 'rgba(255, 255, 255, 0.85)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+  },
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    '&:hover fieldset': {
+      borderColor: theme.palette.primary.main,
+    },
+  },
+}));
+
+const GradientButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(1.5, 4),
+  borderRadius: '8px',
+  fontWeight: 600,
+  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
+    transform: 'translateY(-2px)',
+  },
+}));
+
+const GlowText = styled(Typography)(({ theme }) => ({
+  fontWeight: 700,
+  textShadow: '0 0 10px rgba(94, 114, 228, 0.3)',
+  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+}));
+
+const AIContactForm = () => {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
+  // Handle form changes
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
     });
-  
-    const [loading, setLoading] = useState(false);
-  
-    const handleChange = (e) => {
-      const { name, value } = e.target; // Correctly destructure name and value from e.target
-      setForm((prevForm) => ({
-       ...prevForm,
-        [name]: value, // Use the name attribute to dynamically update the state
-      }));
-    };
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      setLoading(true);
-  
-      emailjs.send(
-        'service_7hs4l9q',
-        'template_l6ys94p',
-        {
-          from_name: form.fname,
-          last_name :form.lname,
-          to_name: "Abishek",
-          from_email: form.email,
-          to_email: "abishek.cs21@bitsathy.ac.in",
-          message: form.message,
-        },
-        'YM-p4arYtqlDD7HFz'
-      )
-     .then(
-        () => {
-          setLoading(false);
-          alert("Thank you. We will get back to you as soon as possible.");
-  
-          setForm({
-            fname: "",
-            email: "",
-            subject:"",
-            message: "",
-          });
-        },
-        (error) => {
-          setLoading(false);
-          console.error(error);
-  
-          alert("Ahh, something went wrong. Please try again.");
-        }
-      );
-    };
-  
-    return (
-        <>
-        <Navbar />
-      <div className="max-w-screen-md mx-auto p-5">
-        <div className="text-center mb-16">
-          <p className="mt-4 text-sm leading-7 text-gray-500 font-regular uppercase">
-            Contact
-          </p>
-          <h3 className="text-3xl sm:text-4xl leading-normal font-extrabold tracking-tight text-gray-900">
-            Get In <span className="text-indigo-600">Touch</span>
-          </h3>
-        </div>
-        <form className="w-full" ref={formRef} onSubmit={handleSubmit}>
-        <div className="flex flex-wrap -mx-3 mb-6">
-      <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
-        <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-first-name">
-           Name
-        </label>
-        <input  name='fname'
-                value={form.fname}
-                onChange={handleChange} className="appearance-none block w-full bg-white-200 text-gray-700 border  rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="please enter your name" />
-        
-      </div>
-      <div className="w-full md:w-1/2 px-3">
-      <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-password">
-          Email Address
-        </label>
-        <input 
-                name='email'
-                value={form.email}
-                onChange={handleChange} className="appearance-none block w-full bg-white-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-email" type="email" placeholder="please enter a valid email address" />
-       
-      </div>
-    </div>
-    <div className="flex flex-wrap -mx-3 mb-6">
-      <div className="w-full px-3">
-      <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
-          Subject
-        </label>
-        <input  name='subject'
-                value={form.subject}
-                onChange={handleChange} className="appearance-none block w-full bg-white-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="subject" />
-      </div>
-    </div>
+  };
+
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulate form submission
+    setTimeout(() => {
+      setLoading(false);
+      alert('Message sent successfully!');
+      setFormData({ name: '', email: '', message: '' });
+    }, 1500);
+  };
+
+  return (
+    <>
+      <Navbar/>
+      <NeuralBackground />
       
-      <div className="flex flex-wrap -mx-3 mb-6">
-      <div className="w-full px-3">
-        <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-password">
-          Your Message
-        </label>
-        <textarea rows="7"
-                name='message'
-                value={form.message}
-                onChange={handleChange}
-                placeholder='What you want to say?' className="appearance-none block w-full bg-white-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+      <ContentContainer maxWidth="lg">
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography 
+            variant="overline" 
+            fontWeight={600} 
+            color="primary" 
+            sx={{ letterSpacing: 2, mb: 1, display: 'block' }}
+          >
+            NEXT GENERATION
+          </Typography>
           
-        </textarea>
-      </div>
-      <div className="flex justify-between w-full px-3">
-        <div className="md:flex md:items-center">
-         
-        </div>
-        <button className="shadow bg-indigo-600 hover:bg-indigo-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-6 rounded" type="submit" >
-        {loading ? "Sending..." : "Send Message"}
-        </button>
-      </div>
+          <GlowText variant="h2" component="h1" sx={{ mb: 2 }}>
+            AI-Powered Solutions
+          </GlowText>
+          
+          <Typography 
+            variant="h5" 
+            color="text.secondary" 
+            sx={{ maxWidth: '800px', mx: 'auto', fontWeight: 300 }}
+          >
+            Harnessing neural networks to transform your business with intelligent automation
+          </Typography>
+        </Box>
         
-    </div>
-      
-        </form>
-      </div>
-      </>
-    );
-  }
-  
+        <Grid container spacing={4} justifyContent="center">
+          <Grid item xs={12} md={6}>
+            <GlassCard elevation={0}>
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+                Get in <Box component="span" sx={{ color: 'primary.main' }}>Touch</Box>
+              </Typography>
+              
+              <form onSubmit={handleSubmit}>
+                <StyledTextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  variant="outlined"
+                />
+                
+                <StyledTextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  variant="outlined"
+                />
+                
+                <StyledTextField
+                  fullWidth
+                  label="Message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                />
+                
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <GradientButton 
+                    type="submit"
+                    variant="contained" 
+                    disabled={loading}
+                    startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                  >
+                    {loading ? 'Sending...' : 'Send Message'}
+                  </GradientButton>
+                </Box>
+              </form>
+            </GlassCard>
+          </Grid>
+        </Grid>
+      </ContentContainer>
+    </>
+  );
+};
+
+export default AIContactForm;

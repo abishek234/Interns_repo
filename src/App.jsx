@@ -13,6 +13,9 @@ import Career from './components/Career';
 import View from './components/Dashboard/View';
 import DomainJobs from './components/DomainJob';
 import Stats from './components/Dashboard/Stats';
+import ProductList from './components/Dashboard/ProductList';
+import ProductsAdd from './components/Dashboard/AddProduct';
+import Products from '../src/components/Products';
 import axios from 'axios';
 import { useState,useEffect } from 'react';
 import Form from './components/form';
@@ -54,6 +57,9 @@ function App() {
         <Route path="/stats" element={<Stats />} />
         <Route path="/career" element={<Career jobs={jobs} />} />
         <Route path="/jobs/:domain" element={<DomainJobs jobs={jobs} />} />
+        <Route path="/addproduct" element={<ProductsAdd />} />
+        <Route path="/productview" element={<ProductList/>} />
+        <Route path="/product" element={<Products />} />
 
         
 

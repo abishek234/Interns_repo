@@ -54,6 +54,18 @@ export default function Sidebar2({ menu }) {
             </svg>
             <span className="ml-2" style={{ display: menu ? 'block' : 'none' }}>View</span>
           </NavLink>
+          <NavLink to="/addproduct" className={`inline-flex items-center py-3 text-blue-600 bg-white  hover:text-gray-400 hover:bg-gray-700 focus:text-yellow-400 focus:bg-white-700  rounded-lg px-2 ${menu ? 'justify-start' : 'justify-center'}`} aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            <span className="ml-2" style={{ display: menu ? 'block' : 'none' }}>ProductDetails</span>
+          </NavLink>
+          <NavLink to="/productview" className={`inline-flex items-center py-3 text-blue-600 bg-white  hover:text-gray-400 hover:bg-gray-700 focus:text-yellow-400 focus:bg-white-700  rounded-lg px-2 ${menu ? 'justify-start' : 'justify-center'}`} aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span className="ml-2" style={{ display: menu ? 'block' : 'none' }}>ProductView</span>
+          </NavLink>
           <NavLink to="/stats" className={`inline-flex items-center py-3 text-blue-600 bg-white  hover:text-gray-400 hover:bg-gray-700 focus:text-yellow-400 focus:bg-white-700  rounded-lg px-2 ${menu ? 'justify-start' : 'justify-center'}`} aria-hidden="true">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

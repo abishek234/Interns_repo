@@ -102,17 +102,17 @@ export default function ProductPage() {
         </motion.div>
       )}
 
-      
-      {/* Product Section */}
       <div className="mx-auto max-w-6xl p-6">
         <div className="flex flex-col gap-8 md:flex-row">
-          {/* Hero Image - Left Side */}
+
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             className="md:w-1/2"
           >
+
+
             <img
               src={product?.heroimage || "/api/placeholder/500/600"}
               alt={product?.title || "Product"}

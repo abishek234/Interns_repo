@@ -9,13 +9,17 @@ export default function ProductsTable() {
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    heroimage: '',
-    image: []
+    keyPoints: []
   });
+  const [heroimage, setHeroimage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [keyPoint, setKeyPoint] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -38,15 +42,26 @@ export default function ProductsTable() {
     }
   };
 
+  const handleView = (product) => {
+    setViewingProduct(product);
+    setIsViewing(true);
+  };
+
+  const closeView = () => {
+    setViewingProduct(null);
+    setIsViewing(false);
+  };
+
   const handleEdit = (product) => {
     setEditingProduct(product);
     setFormData({
       title: product.title,
       description: product.description,
-      heroimage: product.heroimage,
-      image: product.image
+      keyPoints: product.keyPoints || []
     });
+    setImagePreview(product.heroimage);
     setIsEditing(true);
+    if (isViewing) closeView();
   };
 
   const handleDelete = async (productId) => {
@@ -54,6 +69,9 @@ export default function ProductsTable() {
       try {
         await axios.delete(`http://localhost:3000/products/delete/${productId}`);
         setProducts(products.filter(product => product._id !== productId));
+        if (viewingProduct && viewingProduct._id === productId) {
+          closeView();
+        }
       } catch (err) {
         console.error('Error deleting product:', err);
         alert('Failed to delete product. Please try again.');
@@ -69,35 +87,63 @@ export default function ProductsTable() {
     });
   };
 
-  const handleImageChange = (e, index) => {
-    const newImages = [...formData.image];
-    newImages[index] = e.target.value;
-    setFormData({
-      ...formData,
-      image: newImages
-    });
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setHeroimage(file);
+      // Create preview URL
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        setImagePreview(fileReader.result);
+      };
+      fileReader.readAsDataURL(file);
+    }
   };
 
-  const addImageField = () => {
-    setFormData({
-      ...formData,
-      image: [...formData.image, '']
-    });
+  const handleAddKeyPoint = (e) => {
+    e.preventDefault();
+    if (keyPoint.trim()) {
+      setFormData({
+        ...formData,
+        keyPoints: [...formData.keyPoints, keyPoint.trim()]
+      });
+      setKeyPoint('');
+    }
   };
 
-  const removeImageField = (index) => {
-    const newImages = [...formData.image];
-    newImages.splice(index, 1);
+  const removeKeyPoint = (index) => {
+    const newKeyPoints = [...formData.keyPoints];
+    newKeyPoints.splice(index, 1);
     setFormData({
       ...formData,
-      image: newImages
+      keyPoints: newKeyPoints
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:3000/products/update/${editingProduct._id}`, formData);
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      
+      if (heroimage) {
+        formDataToSend.append('heroimage', heroimage);
+      }
+      
+      if (formData.keyPoints.length > 0) {
+        formDataToSend.append('keyPoints', JSON.stringify(formData.keyPoints));
+      }
+
+      await axios.put(
+        `http://localhost:3000/products/update/${editingProduct._id}`, 
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
       fetchProducts();
       cancelEdit();
     } catch (err) {
@@ -112,9 +158,11 @@ export default function ProductsTable() {
     setFormData({
       title: '',
       description: '',
-      heroimage: '',
-      image: []
+      keyPoints: []
     });
+    setHeroimage(null);
+    setImagePreview('');
+    setKeyPoint('');
   };
 
   // Truncate long text for better display
@@ -124,14 +172,72 @@ export default function ProductsTable() {
     return text.substring(0, maxLength) + '...';
   };
 
+
+
   return (
     <div className="flex h-screen bg-white">
       <Sidebar menu={menuOpen} />
       <div className="flex-1 flex flex-col">
         <Header toggleMenu={toggleMenu} />
         
-        <div className="p-4 flex-1 overflow-auto">
+        <div className="p-4 flex-1">
           <h1 className="text-2xl font-bold mb-6">Products List</h1>
+          
+          {isViewing && viewingProduct && (
+            <div className="mb-6 bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-semibold">{viewingProduct.title}</h2>
+                <button 
+                  onClick={closeView}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                {viewingProduct.heroimage && (
+                  
+  <div className="mb-4">
+    <img 
+      src={`http://localhost:3000${viewingProduct.heroimage}`} 
+      alt={viewingProduct.title}
+      className="w-full h-64 object-contain rounded border border-gray-200"
+      onError={(e) => {
+        console.error('Image failed to load:', e.target.src);
+        e.target.src = '/placeholder.png'; // Fallback image
+        e.target.onerror = null; // Prevent infinite error loop
+      }}
+    />
+  </div>
+)}
+                  
+                  {/* Edit and Delete buttons removed from view card */}
+                </div>
+                
+                <div>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-medium mb-2">Description</h3>
+                    <p className="text-gray-700 whitespace-pre-line">{viewingProduct.description}</p>
+                  </div>
+                  
+                  {viewingProduct.keyPoints && viewingProduct.keyPoints.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Key Points</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {viewingProduct.keyPoints.map((point, index) => (
+                          <li key={index} className="text-gray-700">{point}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           {isEditing && (
             <div className="mb-6 bg-gray-50 p-4 rounded-lg shadow">
@@ -161,42 +267,68 @@ export default function ProductsTable() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hero Image URL</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hero Image</label>
                     <input
-                      type="text"
+                      type="file"
                       name="heroimage"
-                      value={formData.heroimage}
-                      onChange={handleChange}
+                      accept="image/*"
+                      onChange={handleFileChange}
                       className="w-full p-2 border border-gray-300 rounded"
-                      required
                     />
+               {imagePreview && (
+  <div className="mt-2">
+    <p className="text-sm text-gray-600 mb-1">Current image:</p>
+    <img 
+      src={imagePreview.startsWith('http') 
+        ? imagePreview 
+        : `http://localhost:3000${imagePreview}`} 
+      alt="Product hero" 
+      className="h-24 object-contain border border-gray-200 rounded"
+      onError={(e) => {
+        console.error('Preview image failed to load:', e.target.src);
+        // Use an absolute URL for fallback image
+        e.target.src = 'https://via.placeholder.com/150?text=No+Image'; 
+        e.target.onerror = null;
+      }}
+    />
+  </div>
+)}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Images</label>
-                    {formData.image.map((img, index) => (
-                      <div key={index} className="flex items-center mb-2">
-                        <input
-                          type="text"
-                          value={img}
-                          onChange={(e) => handleImageChange(e, index)}
-                          className="flex-1 p-2 border border-gray-300 rounded"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImageField(index)}
-                          className="ml-2 p-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                        >
-                          Remove
-                        </button>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Key Points</label>
+                    <div className="flex mb-2">
+                      <input
+                        type="text"
+                        value={keyPoint}
+                        onChange={(e) => setKeyPoint(e.target.value)}
+                        className="flex-1 p-2 border border-gray-300 rounded-l"
+                        placeholder="Enter key point"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddKeyPoint}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-r hover:bg-blue-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    
+                    {formData.keyPoints.length > 0 && (
+                      <div className="border border-gray-200 rounded-lg p-2 mt-2 mb-2">
+                        {formData.keyPoints.map((point, index) => (
+                          <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                            <span className="text-sm text-gray-700">{point}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeKeyPoint(index)}
+                              className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addImageField}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      + Add Another Image
-                    </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
@@ -238,7 +370,7 @@ export default function ProductsTable() {
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hero Image</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Images</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Points</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -252,7 +384,7 @@ export default function ProductsTable() {
                           {product.description && product.description.length > 70 && (
                             <button 
                               className="ml-2 text-blue-500 hover:text-blue-700 text-xs"
-                              onClick={() => alert(product.description)}
+                              onClick={() => handleView(product)}
                             >
                               Read more
                             </button>
@@ -261,33 +393,45 @@ export default function ProductsTable() {
                       </td>
                       <td className="py-4 px-4 text-sm">
                         {product.heroimage && (
-                          <a 
-                            href={product.heroimage} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            {truncateText(product.heroimage, 30)}
-                          </a>
+                          <img 
+                          src={`http://localhost:3000${product.heroimage}`}  
+                            alt={product.title}
+                            className="h-12 w-12 object-cover rounded cursor-pointer"
+                            onClick={() => handleView(product)}
+                            onError={(e) => {
+                              console.error('Thumbnail image failed to load:', e.target.src);
+                              e.target.src = '/placeholder.png'; // Fallback image
+                              e.target.onerror = null;
+                            }}
+                          />
                         )}
                       </td>
                       <td className="py-4 px-4 text-sm">
-                        <div className="flex flex-col space-y-1 max-h-20 overflow-y-auto">
-                          {product.image && product.image.map((img, imgIndex) => (
-                            <a 
-                              key={imgIndex}
-                              href={img}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline text-xs"
-                            >
-                              {truncateText(img, 30)}
-                            </a>
-                          ))}
+                        <div className="flex flex-col space-y-1">
+                          {product.keyPoints && product.keyPoints.length > 0 ? (
+                            <ul className="list-disc pl-4 text-xs">
+                              {product.keyPoints.slice(0, 3).map((point, pointIndex) => (
+                                <li key={pointIndex}>{truncateText(point, 30)}</li>
+                              ))}
+                              {product.keyPoints.length > 3 && (
+                                <li className="text-blue-500 cursor-pointer" onClick={() => handleView(product)}>
+                                  +{product.keyPoints.length - 3} more
+                                </li>
+                              )}
+                            </ul>
+                          ) : (
+                            <span className="text-gray-400 italic">No key points</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-4 text-sm">
                         <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleView(product)}
+                            className="px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
+                          >
+                            View
+                          </button>
                           <button
                             onClick={() => handleEdit(product)}
                             className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"

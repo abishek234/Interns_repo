@@ -9,11 +9,13 @@ export default function ProductDetails() {
   const [product, setProduct] = useState({
     title: '',
     description: '',
-    image: [],
-    heroimage: '',
+    keyPoints: []
   });
-
-  const [imageUrl, setImageUrl] = useState('');
+  
+  const [heroImage, setHeroImage] = useState(null);
+  const [keyPoint, setKeyPoint] = useState('');
+  const [preview, setPreview] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,25 +25,38 @@ export default function ProductDetails() {
     });
   };
 
-  const handleAddImage = (e) => {
-    e.preventDefault(); // Prevent form submission
-    if (imageUrl.trim()) {
-      setProduct({
-        ...product,
-        image: [...product.image, imageUrl.trim()]
-      });
-      setImageUrl('');
-    } else {
-      toast.error("Please enter a valid image URL");
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setHeroImage(file);
+      // Create preview URL
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        setPreview(fileReader.result);
+      };
+      fileReader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveImage = (index) => {
-    const updatedImages = [...product.image];
-    updatedImages.splice(index, 1);
+  const handleAddKeyPoint = (e) => {
+    e.preventDefault();
+    if (keyPoint.trim()) {
+      setProduct({
+        ...product,
+        keyPoints: [...product.keyPoints, keyPoint.trim()]
+      });
+      setKeyPoint('');
+    } else {
+      toast.error("Please enter a valid key point");
+    }
+  };
+
+  const handleRemoveKeyPoint = (index) => {
+    const updatedKeyPoints = [...product.keyPoints];
+    updatedKeyPoints.splice(index, 1);
     setProduct({
       ...product,
-      image: updatedImages
+      keyPoints: updatedKeyPoints
     });
   };
 
@@ -54,7 +69,22 @@ export default function ProductDetails() {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/products/createproduct', product);
+      // Create FormData object to handle file upload
+      const formData = new FormData();
+      formData.append('title', product.title);
+      formData.append('description', product.description);
+      formData.append('heroimage', heroImage);
+      
+      // Add key points as a JSON string or individual entries
+      if (product.keyPoints.length > 0) {
+        formData.append('keyPoints', JSON.stringify(product.keyPoints));
+      }
+
+      const response = await axios.post('http://localhost:3000/products/create-product', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       toast.success("Product added successfully!");
       
@@ -62,17 +92,17 @@ export default function ProductDetails() {
       setProduct({
         title: '',
         description: '',
-        image: [],
-        heroimage: '',
+        keyPoints: []
       });
-      setImageUrl('');
+      setHeroImage(null);
+      setPreview('');
+      setKeyPoint('');
     } catch (error) {
       console.error('There has been a problem with your fetch operation:', error);
-      toast.error("Failed to add product");
+      toast.error("Failed to add product: " + (error.response?.data?.message || error.message));
     }
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
@@ -80,9 +110,9 @@ export default function ProductDetails() {
   const validateFormFields = () => {
     let isValid = true;
 
-    // Check if all fields are filled
-    if (!product.title || !product.description || !product.heroimage || product.image.length === 0) {
-      toast.error("Please fill all fields");
+    // Check if required fields are filled
+    if (!product.title || !product.description || !heroImage) {
+      toast.error("Please fill all required fields");
       return false;
     }
 
@@ -98,16 +128,10 @@ export default function ProductDetails() {
       toast.error("Product description is required");
     }
 
-    // Check if hero image is empty
-    if (!product.heroimage.trim()) {
+    // Check if hero image is selected
+    if (!heroImage) {
       isValid = false;
-      toast.error("Hero image URL is required");
-    }
-
-    // Check if images array is empty
-    if (product.image.length === 0) {
-      isValid = false;
-      toast.error("At least one product image is required");
+      toast.error("Hero image is required");
     }
 
     return isValid;
@@ -120,9 +144,12 @@ export default function ProductDetails() {
         <div className="flex-1 flex flex-col">
           <Header toggleMenu={toggleMenu} />
           
-          <div className="p-4 max-w-3xl mx-auto w-full flex-1 overflow-auto">
+          {/* Changed to remove overflow-auto class */}
+          <div className="p-4 max-w-3xl mx-auto w-full flex-1">
+            <h2 className="text-xl font-semibold mb-6">Add New Product</h2>
+            
             <div className="mb-6">
-              <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-900">Product Title</label>
+              <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-900">Product Title *</label>
               <input 
                 type="text" 
                 name="title" 
@@ -135,62 +162,25 @@ export default function ProductDetails() {
             </div>
             
             <div className="mb-6">
-              <label htmlFor="heroimage" className="block mb-2 text-sm font-medium text-gray-900">Hero Image URL</label>
+              <label htmlFor="heroimage" className="block mb-2 text-sm font-medium text-gray-900">Hero Image *</label>
               <input 
-                type="text" 
+                type="file" 
                 name="heroimage" 
                 id="heroimage" 
+                accept="image/*"
                 className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                placeholder="Enter hero image URL" 
-                value={product.heroimage}
-                onChange={handleChange} 
+                onChange={handleFileChange} 
               />
-            </div>
-            
-            <div className="mb-6">
-              <label className="block mb-2 text-sm font-medium text-gray-900">Add Product Images</label>
-              <div className="flex">
-                <input 
-                  type="text" 
-                  name="imageUrl" 
-                  id="imageUrl" 
-                  className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                  placeholder="Enter image URL" 
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)} 
-                />
-                <button 
-                  type="button" 
-                  onClick={handleAddImage} 
-                  className="ml-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-            
-            {product.image.length > 0 && (
-              <div className="mb-10">
-                <p className="block mb-2 text-sm font-medium text-gray-900">Product Images:</p>
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                  {product.image.map((img, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                      <span className="truncate text-sm text-gray-500" style={{ maxWidth: '85%' }}>{img}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveImage(index)}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
+              {preview && (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-gray-700 mb-1">Preview:</p>
+                  <img src={preview} alt="Hero image preview" className="max-h-48 rounded-lg border border-gray-200" />
                 </div>
-              </div>
-            )}
-
+              )}
+            </div>
+            
             <div className="mb-8">
-              <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900">Description</label>
+              <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900">Description *</label>
               <textarea 
                 id="description" 
                 name="description" 
@@ -202,7 +192,50 @@ export default function ProductDetails() {
               ></textarea>
             </div>
             
-            <div className="flex justify-center mb-16 pb-8">
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-medium text-gray-900">Key Points</label>
+              <div className="flex">
+                <input 
+                  type="text" 
+                  name="keyPoint" 
+                  id="keyPoint" 
+                  className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                  placeholder="Enter key point" 
+                  value={keyPoint}
+                  onChange={(e) => setKeyPoint(e.target.value)} 
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddKeyPoint} 
+                  className="ml-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            
+            {product.keyPoints.length > 0 && (
+              <div className="mb-10">
+                <p className="block mb-2 text-sm font-medium text-gray-900">Product Key Points:</p>
+                {/* Modified max-height and removed overflow-y-auto */}
+                <div className="border border-gray-200 rounded-lg p-3">
+                  {product.keyPoints.map((point, index) => (
+                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      <span className="text-sm text-gray-700">{point}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveKeyPoint(index)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-center mb-8">
               <button 
                 type="button" 
                 onClick={handleSubmit} 

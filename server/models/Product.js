@@ -11,16 +11,14 @@ const productSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  image: {
-    type: [String],
-    required: true,
-    trim: true,
-  },
   heroimage: {
     type: String,
     required: true,
   },
- 
+  keyPoints: {
+    type: [String],
+    default: []
+  }
 });
 
 export default mongoose.model('Product', productSchema);

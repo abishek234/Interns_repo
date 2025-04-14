@@ -5,7 +5,9 @@ import mongoose from "mongoose";
 import cors from "cors";
 import UserRoutes from "./routes/UserRoutes.js"; 
 import JobRoutes from "./routes/JobRoutes.js";
-import ProductRoutes from "./routes/ProductRoutes.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import ProductRoutes from './routes/ProductRoutes.js';
 
 
 import dotenv from 'dotenv';
@@ -23,8 +25,15 @@ app.use(cors({
   credentials: true
 }));
 
+// Get dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 app.use('/users', UserRoutes);
 app.use('/jobs', JobRoutes);

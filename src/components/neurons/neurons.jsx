@@ -1,9 +1,7 @@
-import  { useEffect, useRef } from 'react';
-import { useTheme, alpha } from '@mui/material';
+import { useEffect, useRef } from 'react';
 
 const NeuronBackground = () => {
   const canvasRef = useRef(null);
-  const theme = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -14,6 +12,14 @@ const NeuronBackground = () => {
     let neurons = [];
     let mouseX = 0;
     let mouseY = 0;
+
+    // Brand colors based on the logo
+    const brandColors = {
+      orange: "#FF8C00", // Vibrant orange from logo
+      blue: "#0047AB",   // Deep blue from logo
+      lightOrange: "rgba(255, 140, 0, 0.5)",
+      lightBlue: "rgba(0, 71, 171, 0.5)"
+    };
 
     const handleMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -34,19 +40,20 @@ const NeuronBackground = () => {
 
     function initNeurons() {
       neurons = [];
-      const count = Math.min(Math.floor(canvas.width * canvas.height / 12000), 140);
+      const count = Math.min(Math.floor(canvas.width * canvas.height / 15000), 120);
 
       for (let i = 0; i < count; i++) {
         neurons.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 1,
+          size: Math.random() * 1.8 + 0.7,
           vx: (Math.random() - 0.5) * 0.2,
           vy: (Math.random() - 0.5) * 0.2,
           connections: [],
           pulses: [],
           lastPulseTime: Date.now(),
-          color: Math.random() > 0.5 ? "#007bff" : "#9c27b0", // Blue or Purple
+          // Alternate between orange and blue for brand consistency
+          color: Math.random() > 0.5 ? brandColors.orange : brandColors.blue,
           active: Math.random() > 0.6
         });
       }
@@ -69,7 +76,7 @@ const NeuronBackground = () => {
         const dy = mouseY - neuron.y;
         const distToMouse = Math.sqrt(dx * dx + dy * dy);
 
-        if (distToMouse < 120) {
+        if (distToMouse < 150) {
           neuron.active = true;
           neuron.vx += dx * 0.0001;
           neuron.vy += dy * 0.0001;
@@ -85,26 +92,40 @@ const NeuronBackground = () => {
         }
       });
 
-      // Draw connections
-      ctx.lineWidth = 0.5;
+      // Draw connections with brand colors
+      ctx.lineWidth = 0.4;
       neurons.forEach((neuron, i) => {
         for (let j = i + 1; j < neurons.length; j++) {
           const other = neurons[j];
           const dx = neuron.x - other.x;
           const dy = neuron.y - other.y;
           const distance = Math.sqrt(dx ** 2 + dy ** 2);
-          const maxDistance = 100;
+          const maxDistance = 180; // Longer connections
 
-          if (distance < maxDistance && (neuron.active || other.active)) {
+          if (distance < maxDistance) {
             const opacity = 1 - distance / maxDistance;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.2})`;
-
+            
+            // Gradient connection color based on the two neurons it connects
+            let connectionColor;
+            if (neuron.color === brandColors.orange && other.color === brandColors.blue) {
+              connectionColor = `rgba(127, 104, 171, ${opacity * 0.25})`; // Purple blend
+            } else if (neuron.color === brandColors.blue && other.color === brandColors.orange) {
+              connectionColor = `rgba(127, 104, 171, ${opacity * 0.25})`; // Purple blend
+            } else if (neuron.color === brandColors.orange) {
+              connectionColor = `rgba(255, 140, 0, ${opacity * 0.25})`; // Orange
+            } else {
+              connectionColor = `rgba(0, 71, 171, ${opacity * 0.25})`; // Blue
+            }
+            
+            ctx.strokeStyle = connectionColor;
             ctx.beginPath();
             ctx.moveTo(neuron.x, neuron.y);
             ctx.lineTo(other.x, other.y);
             ctx.stroke();
 
+            // More frequent pulses for better visibility
             if (
+              (neuron.active || other.active) &&
               now - neuron.lastPulseTime > 2500 &&
               Math.random() < 0.01
             ) {
@@ -114,7 +135,8 @@ const NeuronBackground = () => {
                 targetX: other.x,
                 targetY: other.y,
                 progress: 0,
-                speed: 0.01 + Math.random() * 0.015
+                speed: 0.01 + Math.random() * 0.015,
+                color: neuron.color // Use the neuron's color for its pulse
               });
               neuron.lastPulseTime = now;
             }
@@ -122,7 +144,7 @@ const NeuronBackground = () => {
         }
       });
 
-      // Draw pulses
+      // Draw pulses with enhanced visibility
       neurons.forEach(neuron => {
         neuron.pulses = neuron.pulses.filter(pulse => {
           pulse.progress += pulse.speed;
@@ -131,7 +153,7 @@ const NeuronBackground = () => {
           const x = pulse.x + (pulse.targetX - pulse.x) * pulse.progress;
           const y = pulse.y + (pulse.targetY - pulse.y) * pulse.progress;
 
-          ctx.fillStyle = neuron.color;
+          ctx.fillStyle = pulse.color;
           ctx.beginPath();
           ctx.arc(x, y, 2, 0, Math.PI * 2);
           ctx.fill();
@@ -140,10 +162,10 @@ const NeuronBackground = () => {
         });
       });
 
-      // Draw neurons
+      // Draw neurons with brand colors
       neurons.forEach(neuron => {
         const size = neuron.active ? neuron.size * 1.8 : neuron.size;
-        const glow = neuron.active ? 12 : 0;
+        const glow = neuron.active ? 8 : 0;
 
         if (neuron.active) {
           ctx.shadowBlur = glow;
@@ -152,18 +174,23 @@ const NeuronBackground = () => {
 
         ctx.beginPath();
         ctx.arc(neuron.x, neuron.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = neuron.active ? neuron.color : alpha(neuron.color, 0.5);
+        ctx.fillStyle = neuron.active ? neuron.color : (
+          neuron.color === brandColors.orange ? 
+            `rgba(255, 140, 0, 0.4)` : `rgba(0, 71, 171, 0.4)`
+        );
         ctx.fill();
         ctx.shadowBlur = 0;
 
+        // Draw node branches for active neurons
         if (neuron.active) {
-          const branches = 3 + Math.floor(Math.random() * 3);
-          ctx.strokeStyle = alpha(neuron.color, 0.3);
-          ctx.lineWidth = 0.4;
+          const branches = 2 + Math.floor(Math.random() * 3);
+          ctx.strokeStyle = neuron.color === brandColors.orange ? 
+            `rgba(255, 140, 0, 0.3)` : `rgba(0, 71, 171, 0.3)`;
+          ctx.lineWidth = 0.3;
 
           for (let i = 0; i < branches; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const length = 5 + Math.random() * 10;
+            const length = 4 + Math.random() * 8;
             ctx.beginPath();
             ctx.moveTo(neuron.x, neuron.y);
             ctx.lineTo(
@@ -185,7 +212,7 @@ const NeuronBackground = () => {
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [theme]);
+  }, []);
 
   return (
     <canvas
@@ -197,7 +224,7 @@ const NeuronBackground = () => {
         width: '100%',
         height: '100%',
         zIndex: 0,
-        filter: 'drop-shadow(0 0 6px rgba(0,123,255,0.3)) drop-shadow(0 0 8px rgba(156,39,176,0.3))'
+        filter: 'drop-shadow(0 0 5px rgba(255,140,0,0.2)) drop-shadow(0 0 5px rgba(0,71,171,0.2))'
       }}
     />
   );

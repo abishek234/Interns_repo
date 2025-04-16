@@ -3,6 +3,7 @@ import { CheckCircle, ArrowRight } from "lucide-react";
 import axios from "axios";
 import Navbar from './Navbar';
 import NeuronBackground from '../../src/components/neurons/neurons';
+import Footer from "./ui/Footer";
 
 export default function ProductPage() {
   const [products, setProducts] = useState([]);
@@ -251,6 +252,7 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }
